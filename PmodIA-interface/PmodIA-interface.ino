@@ -1,5 +1,7 @@
 //https://ez.analog.com/thread/42057?start=15&tstart=0
 
+// this is a test of the new branch
+
 #include "Wire.h"
 #define button 2
 #define SLAVE_ADDR 0x0D
