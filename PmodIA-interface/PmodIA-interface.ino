@@ -43,6 +43,8 @@ const int incre_num = 1; // Set number of increments; < 511
 
 char state; 
 
+boolean RUN_STATE = LOW;
+
 void setup() {
   Wire.begin();
   Serial.begin(115200);
@@ -80,12 +82,27 @@ void loop(){
           delay(1000);
           break;
 
+      
+        case 'D':
+          RUN_STATE = HIGH;
+          break;
+
+      
+        case 'E':
+          RUN_STATE = LOW;
+          break;
+
       /////Programming Device Registers/////
 
 
       }
 
       Serial.flush();
+    }
+
+    if (RUN_STATE == HIGH) {
+       runSweep();
+       delay(50);
     }
 
 }
@@ -120,7 +137,7 @@ void programReg(){
   writeData(NUM_INCRE_R1, (incre_num & 0x001F00)>>0x08 );
   writeData(NUM_INCRE_R2, (incre_num & 0x0000FF));
 
-  Serial.println("Register set");
+  //Serial.println("Register set");
 
 }
 
@@ -148,7 +165,7 @@ void runSweep() {
 
 
   while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(100); // delay between measurements
+    delay(10); // delay between measurements
 
     int flag = readData(STATUS_REG)& 2;
 
@@ -165,7 +182,7 @@ void runSweep() {
       img = (R1 << 8) | R2;
 
       freq = start_freq + i*incre_freq;
-      mag = sqrt(pow(double(re),2)+pow(double(img),2));
+      //mag = sqrt(pow(double(re),2)+pow(double(img),2));
 
       // phase = atan(double(img)/double(re));
       // phase = (180.0/3.1415926)*phase;  //convert phase angle to degrees
@@ -177,24 +194,24 @@ void runSweep() {
        gain = (1.0/200000.0)/4982.421;
     //    impedance = 1/(gain*mag);
 
-      mag = 1.0/(mag*gain);
-      mag = mag/1000;
+      //mag = 1.0/(mag*gain);
+      //mag = mag/1000;
         
-      Serial.print("Frequency: ");
+      Serial.print("F");
       Serial.print(freq/1000);
-      Serial.print(",kHz;");
+      Serial.print(";");
 
-      Serial.print(" Magnitude: ");
-      Serial.print(mag);
-      Serial.print(",kOhm;");
+      //Serial.print(" Magnitude: ");
+      //Serial.print(mag);
+      //Serial.print(",kOhm;");
 
-      Serial.print(" Resistance: ");
+      Serial.print("R");
       Serial.print(re);
-      Serial.print(",");
+      Serial.print(";");
 
-      Serial.print(" Reactance: ");
+      Serial.print("I");
       Serial.print(img);
-      Serial.println(",");
+      Serial.println(";");
 
       // break;  //TODO: for single run, remove after debugging
       
