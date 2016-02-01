@@ -49,7 +49,7 @@ void draw() {
       time = millis();
       delay(50);
      if(record  && data!= null) {
-        output.println(millis()+","+","+resistance+","+reactance+","+magnitude);
+        output.println(millis()+","+freq+","+resistance+","+reactance+","+magnitude);
        }
        if (data !=null) {
         resData.removeFirst();
@@ -103,7 +103,7 @@ void draw() {
          }
          textSize(30);
          fill(50,50,250);
-         text("Reactance: "+newReac, 10, 90);
+         text("Reactance: "+newReac, 360, 50);
 
 
          // Plot magnitdue
@@ -124,7 +124,7 @@ void draw() {
          }
          textSize(30);
          fill(250,50,50);
-         text("Magnitude: "+newMag, 10, 130);
+         text("Magnitude: "+newMag, 710, 50);
 
 
   
@@ -138,6 +138,15 @@ void draw() {
          fill(100,250,100,200);
          textSize(15);
          text("Max: "+maxRes, width-200, 70);
+         
+         if (record==true) {
+                   textSize(30);
+                   fill(250,250,250);
+                   text("RECORDING", 60, height-30);
+                   ellipse(30,height-40,30,30);
+                   fill(200,50,50);
+                   ellipse(30,height-40,25,25);
+         }
 
    }
    
@@ -166,6 +175,7 @@ void keyPressed() {
     String filename = "ImpedanceData";  
     output = createWriter(filename+"-"+str(year)+"-"+str(month)+"-"+str(day)+"-"+str(hour)+"-"+str(minute)+"-"+str(seconds)+".csv"); 
     output.println("millis,frequency,resistance,reactance,magnitude");
+
     
     
   } else if (key == 's' || key == 'S') {
@@ -193,4 +203,3 @@ void endFile() {
     println("Recording Ended!");
   
 }
-
