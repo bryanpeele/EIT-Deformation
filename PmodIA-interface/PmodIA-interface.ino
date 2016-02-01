@@ -197,7 +197,7 @@ void runSweep() {
       //mag = 1.0/(mag*gain);
       //mag = mag/1000;
         
-      Serial.print("F");
+      //Serial.print("F");
       Serial.print(freq/1000);
       Serial.print(";");
 
@@ -205,11 +205,11 @@ void runSweep() {
       //Serial.print(mag);
       //Serial.print(",kOhm;");
 
-      Serial.print("R");
+      //Serial.print("R");
       Serial.print(re);
       Serial.print(";");
 
-      Serial.print("I");
+      //Serial.print("I");
       Serial.print(img);
       Serial.println(";");
 
