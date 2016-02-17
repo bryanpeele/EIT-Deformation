@@ -45,7 +45,37 @@ char state;
 
 boolean RUN_STATE = LOW;
 
+int readData(int addr);
+void writeData(int addr, int data);
+void runSweepSingle();
+void sweepElectrodes();
+void setMUX(int MUX, int output);
+byte getFrequency(float freq, int n);
+boolean measureTemperature();
+void programReg();
+void runSweep();
+
+
 void setup() {
+
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+
+  digitalWrite(2, LOW);
+  digitalWrite(3, LOW);
+  digitalWrite(4, LOW);
+  digitalWrite(5, LOW);
+  digitalWrite(6, LOW);
+  digitalWrite(7, LOW);
+  digitalWrite(8, LOW);
+  digitalWrite(9, LOW);
+  
   Wire.begin();
   Serial.begin(115200);
   pinMode(button, INPUT);   
@@ -78,8 +108,8 @@ void loop(){
           break;
 
         case 'C':
-          runSweep();
-          delay(1000);
+          runSweepElectrodes();
+          delay(10);
           break;
 
       
@@ -91,251 +121,20 @@ void loop(){
         case 'E':
           RUN_STATE = LOW;
           break;
-
-      /////Programming Device Registers/////
-
-
       }
 
       Serial.flush();
     }
 
     if (RUN_STATE == HIGH) {
-       runSweep();
-       delay(50);
-    }
-
-}
-
-
-
-
-
-void programReg(){
-
-  // Set Range 1, PGA gain 1
-  writeData(CTRL_REG,0x01);
-
-  // Set settling cycles
-  writeData(NUM_SCYCLES_R1, 0x07);
-  writeData(NUM_SCYCLES_R2, 0xFF);
-
-  //writeData(NUM_SCYCLES_R1, 0x40);
-  //writeData(NUM_SCYCLES_R2, 0x0);
-
-  // Start frequency of 1kHz
-  writeData(START_FREQ_R1, getFrequency(start_freq,1));
-  writeData(START_FREQ_R2, getFrequency(start_freq,2));
-  writeData(START_FREQ_R3, getFrequency(start_freq,3));
-
-  // Increment by 1 kHz
-  writeData(FREG_INCRE_R1, getFrequency(incre_freq,1)); 
-  writeData(FREG_INCRE_R2, getFrequency(incre_freq,2)); 
-  writeData(FREG_INCRE_R3, getFrequency(incre_freq,3));
-
-  // Points in frequency sweep (100), max 511
-  writeData(NUM_INCRE_R1, (incre_num & 0x001F00)>>0x08 );
-  writeData(NUM_INCRE_R2, (incre_num & 0x0000FF));
-
-  //Serial.println("Register set");
-
-}
-
-
-void runSweep() {
-  short re;
-  short img;
-  double freq;
-  double mag;
-  double phase;
-  double gain;
-  double impedance;
-  int i=0;
-
-  programReg();
-
-  // 1. Standby '10110000' Mask D8-10 of avoid tampering with gains
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xB0);
-
-  // 2. Initialize sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x10);
-
-  // 3. Start sweep
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); 
-
-
-  while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(10); // delay between measurements
-
-    int flag = readData(STATUS_REG)& 2;
-
-
-    if (flag==2) {
-
-      byte R1 = readData(RE_DATA_R1);
-      byte R2 = readData(RE_DATA_R2);
-      re = (R1 << 8) | R2;
-
-
-      R1  = readData(IMG_DATA_R1);
-      R2  = readData(IMG_DATA_R2);
-      img = (R1 << 8) | R2;
-
-      freq = start_freq + i*incre_freq;
-      //mag = sqrt(pow(double(re),2)+pow(double(img),2));
-
-      // phase = atan(double(img)/double(re));
-      // phase = (180.0/3.1415926)*phase;  //convert phase angle to degrees
-
-      // Phase Calibration
-      // sys_phase = 118;
-      // phase = phase - sys_phase;
-
-       gain = (1.0/200000.0)/4982.421;
-    //    impedance = 1/(gain*mag);
-
-      //mag = 1.0/(mag*gain);
-      //mag = mag/1000;
-        
-      //Serial.print("F");
-      Serial.print(freq/1000);
-      Serial.print(";");
-
-      //Serial.print(" Magnitude: ");
-      //Serial.print(mag);
-      //Serial.print(",kOhm;");
-
-      //Serial.print("R");
-      Serial.print(re);
-      Serial.print(";");
-
-      //Serial.print("I");
-      Serial.print(img);
-      Serial.println(";");
-
-      // break;  //TODO: for single run, remove after debugging
-      
-      //Increment frequency
-      if((readData(STATUS_REG) & 0x07) < 4 ){
-        writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x30);
-        i++;
-      }
+       runSweepElectrodes();
 
     }
-  }
 
-
-  //Power down
-//  writeData(CTRL_REG,0xA0);
-  writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0xA0);
-}
-
-
-
-void writeData(int addr, int data) {
-
- Wire.beginTransmission(SLAVE_ADDR);
- Wire.write(addr);
- Wire.write(data);
- Wire.endTransmission();
- delay(1);
-}
-
-
-int readData(int addr){
-  int data;
-
-  Wire.beginTransmission(SLAVE_ADDR);
-  Wire.write(ADDR_PTR);
-  Wire.write(addr);
-  Wire.endTransmission();
-
-  delay(1);
-
-  Wire.requestFrom(SLAVE_ADDR,1);
-
-  if (Wire.available() >= 1){
-    data = Wire.read();
-  }
-  else {
-    data = -1;
-  }
-
-  delay(1);
-  return data;  
 }
 
 
 
 
-boolean measureTemperature() {
-  
-  // Measure temperature '10010000'
-  writeData(CTRL_REG, 0x90);
-  //TODO: necessary to write to second control register?
 
-  delay(10); // wait for 10 ms
-
-  
-
-  //Check status reg for temp measurement available
-  int flag = readData(STATUS_REG)& 1;
-
-  if (flag == 1) {
-
-
-    // Temperature is available
-    int temperatureData = readData(TEMP_R1) << 8;
-    temperatureData |= readData(TEMP_R2);
-    temperatureData &= 0x3FFF; // remove first two bits
-    
-    if (temperatureData & 0x2000 == 1) { // negative temperature
-      
-      temperatureData -= 0x4000;
-    }
-    
-    double val = double(temperatureData) / 32;
-    temperatureData /= 32;
-    
-    Serial.print("Temperature: ");
-    Serial.print(val);
-    //Serial.write(176);  //degree sign
-    Serial.println("C.");
-    
-
-    // Power Down '10100000'
-    writeData(CTRL_REG,0xA0);
-
-    
-    return true;
-
-  } else {
-    return false;
-  }
-}
-
-
-byte getFrequency(float freq, int n){
-  long val = long((freq/(MCLK/4)) * pow(2,27));
-  byte code;
-
-    switch (n) {
-      case 1:
-        code = (val & 0xFF0000) >> 0x10; 
-        break;
-      
-      case 2:
-        code = (val & 0x00FF00) >> 0x08;
-        break;
-
-      case 3:
-        code = (val & 0x0000FF);
-        break;
-
-      default: 
-        code = 0;
-    }
-
-  return code;  
-}
 
