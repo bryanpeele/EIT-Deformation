@@ -1,6 +1,6 @@
 #include "Arduino.h"
 
-void runSweep(String name) {
+void runSweepSingle2(String name) {
   short re;
   short img;
   double freq;
@@ -9,8 +9,6 @@ void runSweep(String name) {
   double gain;
   double impedance;
   int i=0;
-
-  Serial.print(name);
 
   programReg();
 
@@ -24,7 +22,7 @@ void runSweep(String name) {
   writeData(CTRL_REG,(readData(CTRL_REG) & 0x07) | 0x20); 
 
   while((readData(STATUS_REG) & 0x07) < 4 ) {  // Check that status reg != 4, sweep not complete
-    delay(10); // delay between measurements
+    delay(8); // delay between measurements
 
     int flag = readData(STATUS_REG)& 2;
 

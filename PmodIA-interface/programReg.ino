@@ -21,8 +21,8 @@ void programReg(){
 
   // Points in frequency sweep (100), max 511
   //writeData(NUM_INCRE_R1, (incre_num & 0x001F00)>>0x08 );
-  writeData(NUM_INCRE_R1, 0x00);
-  writeData(NUM_INCRE_R2, incre_num);
+  writeData(NUM_INCRE_R1,(incre_num & 0x001F00)>>0x08 );
+  writeData(NUM_INCRE_R2, (incre_num & 0x0000FF));
 
   //Serial.println("Register set");
 

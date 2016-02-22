@@ -37,9 +37,10 @@
 
 
 const float MCLK = 16.776*pow(10,6); // AD5933 Internal Clock Speed 16.776 MHz
-const float start_freq = 50*pow(10,3); // Set start freq, < 100Khz
+const float start_freq = 30*pow(10,3); // Set start freq, < 100Khz
 const float incre_freq = 1*pow(10,3); // Set freq increment
 const int incre_num = 1; // Set number of increments; < 511
+const int samples = 20;
 
 char state; 
 
@@ -75,6 +76,8 @@ void setup() {
   digitalWrite(7, LOW);
   digitalWrite(8, LOW);
   digitalWrite(9, LOW);
+
+
   
   Wire.begin();
   Serial.begin(115200);
@@ -108,7 +111,7 @@ void loop(){
           break;
 
         case 'C':
-          runSweepElectrodes();
+          runSweepElectrodes("Empty");
           delay(10);
           break;
 
@@ -121,13 +124,59 @@ void loop(){
         case 'E':
           RUN_STATE = LOW;
           break;
+
+
+        case 'F':
+          for (int i=0; i<samples; i++) {
+            runSweepElectrodes("Empty");
+            delay(10);
+          }
+          break;
+
+        case 'G':
+          for (int i=0; i<samples; i++) {
+            runSweepElectrodes("Center");
+            delay(10);
+          }
+          break;
+
+         case 'H':
+          for (int i=0; i<samples; i++) {
+            runSweepElectrodes("East");
+            delay(10);
+          }
+          break;
+
+         case 'I':
+          for (int i=0; i<samples; i++) {
+            runSweepElectrodes("North");
+            delay(10);
+          }
+          break;
+
+        case 'J':
+          for (int i=0; i<samples; i++) {
+            runSweepElectrodes("West");
+            delay(10);
+          }
+          break;
+
+         case 'K':
+          for (int i=0; i<samples; i++) {
+            runSweepElectrodes("South");
+            delay(10);
+          }
+          break;
+      
       }
+
+      
 
       Serial.flush();
     }
 
     if (RUN_STATE == HIGH) {
-       runSweepElectrodes();
+       runSweepElectrodes("None");
 
     }
 
